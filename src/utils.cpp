@@ -1,17 +1,17 @@
-#include "utils.h"
+#include "../include/utils.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "3rd/stb/stb_image.h"
+#include "../3rd/stb/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "3rd/stb/stb_image_write.h"
+#include "../3rd/stb/stb_image_write.h"
 
-
-float* fmalloc(int n) {
-    return (float*)malloc(sizeof(float) * n);
+float *fmalloc(int n)
+{
+    return (float *)malloc(sizeof(float) * n);
 }
 
-
-void imread(char *path, float **out_data, int *out_h, int *out_w, int *out_c) {
+void imread(const char *path, float **out_data, int *out_h, int *out_w, int *out_c)
+{
     // load image, memory order is HWC (RGB)
     // see stb_image.h: 170
     int h, w, c;
@@ -25,12 +25,13 @@ void imread(char *path, float **out_data, int *out_h, int *out_w, int *out_c) {
     *out_data = data, *out_h = h, *out_w = w, *out_c = c;
 }
 
-
-void imwrite(char *path, float *data, int h, int w, int c) {
+void imwrite(const char *path, float *data, int h, int w, int c)
+{
     int n = h * w * c;
-    unsigned char *buffer = (unsigned char*)malloc(n);
-    
-    for (int i = 0; i < n; i++) {
+    unsigned char *buffer = (unsigned char *)malloc(n);
+
+    for (int i = 0; i < n; i++)
+    {
         if (data[i] < 0.f)
             buffer[i] = 0;
         else if (data[i] > 255.f)

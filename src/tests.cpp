@@ -1,29 +1,53 @@
-#include "tests.h"
+#include "../include/tests.h"
 
 // 练习1，实现库函数strlen
-int my_strlen(char *str) {
+int my_strlen(char *str)
+{
     /**
      * 统计字符串的长度，太简单了。
      */
 
     // IMPLEMENT YOUR CODE HERE
+    int len = 0;
+    while (str[len] != '\0')
+    {
+        len++;
+    }
+    return len;
     return 0;
 }
 
-
 // 练习2，实现库函数strcat
-void my_strcat(char *str_1, char *str_2) {
+void my_strcat(char *str_1, char *str_2)
+{
     /**
      * 将字符串str_2拼接到str_1之后，我们保证str_1指向的内存空间足够用于添加str_2。
      * 注意结束符'\0'的处理。
      */
 
     // IMPLEMENT YOUR CODE HERE
+    int i = 0;
+    while (str_1[i] != '\0')
+    {
+        i++;
+    }
+
+    // 第二步：把 str_2 逐个字符拷过去
+    int j = 0;
+    while (str_2[j] != '\0')
+    {
+        str_1[i] = str_2[j];
+        i++;
+        j++;
+    }
+
+    // 第三步：手动补上结束符
+    str_1[i] = '\0';
 }
 
-
 // 练习3，实现库函数strstr
-char* my_strstr(char *s, char *p) {
+char *my_strstr(char *s, char *p)
+{
     /**
      * 在字符串s中搜索字符串p，如果存在就返回第一次找到的地址，不存在就返回空指针(0)。
      * 例如：
@@ -31,9 +55,29 @@ char* my_strstr(char *s, char *p) {
      */
 
     // IMPLEMENT YOUR CODE HERE
-    return 0;
-}
+    int i = 0;
+    while (s[i] != '\0')
+    {
+        // 每次从 haystack[i] 开始，尝试和 needle 逐个字符匹配
+        int j = 0;
+        while (s[i + j] != '\0' && p[j] != '\0')
+        {
+            if (s[i + j] != p[j])
+            {
+                break; // 有一个字符不匹配，放弃这次尝试
+            }
+            j++;
+        }
+        // 如果 needle[j] 走到了 '\0'，说明 needle 的每一个字符都匹配成功了
+        if (p[j] == '\0')
+        {
+            return (char *)(s + i);
+        }
+        i++; // 否则 haystack 起始位置往后挪一位，重新试
+    }
 
+    return 0; // 整个 haystack 都试完了也没找到
+}
 
 /**
  * ================================= 背景知识 ==================================
@@ -73,9 +117,9 @@ char* my_strstr(char *s, char *p) {
  *   理解了图片的存储之后，再开始编写代码。
  */
 
-
 // 练习4，将彩色图片(rgb)转化为灰度图片
-void rgb2gray(float *in, float *out, int h, int w) {
+void rgb2gray(float *in, float *out, int h, int w)
+{
     /**
      * 编写这个函数，将一张彩色图片转化为灰度图片。以下是各个参数的含义：
      * (1) float *in:  指向彩色图片对应的内存区域（或者说数组）首地址的指针。
@@ -96,11 +140,27 @@ void rgb2gray(float *in, float *out, int h, int w) {
      */
 
     // IMPLEMENT YOUR CODE HERE
-    // ...
+    for (int i = 0; i < h; i++)
+    {
+        for (int j = 0; j < w; j++)
+        {
+            // 彩色图片在内存中按 R G B R G B ... 存储
+            // 像素 (i, j) 的 R 分量在索引 (i * w + j) * 3 处
+            int cai = (i * w + j) * 3;
+            float R = in[cai];
+            float G = in[cai + 1];
+            float B = in[cai + 2];
+            // 利用公式 V = 0.1140 * B + 0.5870 * G + 0.2989 * R 计算灰度值
+            float V = 0.1140 * B + 0.5870 * G + 0.2989 * R;
+            // 写入灰度图片，灰度图每个像素只占一个位置
+            out[i * w + j] = V;
+        }
+    }
 }
 
 // 练习5，实现图像处理算法 resize：缩小或放大图像
-void resize(float *in, float *out, int h, int w, int c, float scale) {
+void resize(float *in, float *out, int h, int w, int c, float scale)
+{
     /**
      * 图像处理知识：
      *  1.单线性插值法
@@ -198,12 +258,59 @@ void resize(float *in, float *out, int h, int w, int c, float scale) {
 
     int new_h = h * scale, new_w = w * scale;
     // IMPLEMENT YOUR CODE HERE
+    // 遍历目标图像的每个像素 (x, y)
+    for (int y = 0; y < new_h; y++)
+    {
+        for (int x = 0; x < new_w; x++)
+        {
+            // 1. 计算对应源图像的坐标
+            float x0 = (float)x / scale;
+            float y0 = (float)y / scale;
 
+            // 2. 计算四个邻居点的坐标
+            int x1 = (int)x0; // floor(x0)
+            int y1 = (int)y0; // floor(y0)
+            int x2 = x1 + 1;
+            int y2 = y1 + 1;
+
+            // 小数部分作为插值权重
+            float dx = x0 - x1;
+            float dy = y0 - y1;
+
+            // 3. 边界检查：防止邻居坐标超出源图像范围
+            if (x1 < 0)
+                x1 = 0;
+            if (x2 >= w)
+                x2 = w - 1;
+            if (y1 < 0)
+                y1 = 0;
+            if (y2 >= h)
+                y2 = h - 1;
+
+            // 4. 对每个通道分别进行双线性插值
+            for (int ch = 0; ch < c; ch++)
+            {
+                // 获取四个邻居像素的值
+                // P1 = (x1, y2) 左上角, P2 = (x2, y2) 右上角
+                // P3 = (x1, y1) 左下角, P4 = (x2, y1) 右下角
+                float P1 = in[(y2 * w + x1) * c + ch];
+                float P2 = in[(y2 * w + x2) * c + ch];
+                float P3 = in[(y1 * w + x1) * c + ch];
+                float P4 = in[(y1 * w + x2) * c + ch];
+
+                // 双线性插值公式
+                float Q = P1 * (1 - dx) * (1 - dy) + P2 * dx * (1 - dy) + P3 * (1 - dx) * dy + P4 * dx * dy;
+
+                // 写入目标图像
+                out[(y * new_w + x) * c + ch] = Q;
+            }
+        }
+    }
 }
 
-
 // 练习6，实现图像处理算法：直方图均衡化
-void hist_eq(float *in, int h, int w) {
+void hist_eq(float *in, int h, int w)
+{
     /**
      * 将输入图片进行直方图均衡化处理。参数含义：
      * (1) float *in: 输入的灰度图片。
@@ -221,4 +328,66 @@ void hist_eq(float *in, int h, int w) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+    if (in == nullptr || h <= 0 || w <= 0)
+        return; // 安全检查
+
+    int total_pixels = h * w;
+    int hist[256] = {0};
+
+    // 1. 统计直方图 (将小数四舍五入映射到0-255的整数)
+    for (int i = 0; i < total_pixels; i++)
+    {
+        int val = (int)(in[i] + 0.5f);
+        if (val < 0)
+            val = 0;
+        if (val > 255)
+            val = 255;
+        hist[val]++;
+    }
+
+    // 2. 计算累积分布函数 (CDF)
+    float cdf[256] = {0.0f};
+    cdf[0] = (float)hist[0] / total_pixels;
+    for (int i = 1; i < 256; i++)
+    {
+        cdf[i] = cdf[i - 1] + (float)hist[i] / total_pixels;
+    }
+
+    // 寻找非零的最小 CDF 值（标准均衡化公式所需，防止图像整体偏亮）
+    float cdf_min = 0.0f;
+    for (int i = 0; i < 256; i++)
+    {
+        if (hist[i] > 0)
+        {
+            cdf_min = cdf[i];
+            break;
+        }
+    }
+
+    // 3. 建立灰度级映射表
+    unsigned char map[256];
+    for (int i = 0; i < 256; i++)
+    {
+        if (cdf[i] <= cdf_min)
+        {
+            map[i] = 0;
+        }
+        else
+        {
+            // 标准均衡化公式，将结果映射回 0-255
+            float new_val = (cdf[i] - cdf_min) / (1.0f - cdf_min) * 255.0f;
+            map[i] = (unsigned char)(new_val + 0.5f);
+        }
+    }
+
+    // 4. 应用映射表，原地修改输入图像
+    for (int i = 0; i < total_pixels; i++)
+    {
+        int val = (int)(in[i] + 0.5f);
+        if (val < 0)
+            val = 0;
+        if (val > 255)
+            val = 255;
+        in[i] = (float)map[val];
+    }
 }
